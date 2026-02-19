@@ -23,7 +23,7 @@
 
 .action-button {
   padding: 10px 20px;
-  background: #667eea;
+  background: #0077b6;
   color: white;
   border: none;
   border-radius: 6px;
@@ -33,7 +33,7 @@
 }
 
 .action-button:hover {
-  background: #5568d3;
+  background: #0077b6;
 }
 
 .action-button.secondary {
@@ -65,7 +65,7 @@
 
 .risk-card {
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border: 2px solid #667eea;
+  border: 2px solid #0077b6;
 }
 
 .risk-badge {
@@ -144,7 +144,7 @@
 .toggle-icon {
   font-size: 1.5rem;
   font-weight: 300;
-  color: #667eea;
+  color: #0077b6;
 }
 
 .card-content {
@@ -188,7 +188,7 @@
   padding: 15px;
   background: white;
   border-radius: 6px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #0077b6;
 }
 
 .recommendation-item {
@@ -197,7 +197,7 @@
 
 .recommendation-item strong {
   display: block;
-  color: #667eea;
+  color: #0077b6;
   margin-bottom: 5px;
 }
 
@@ -212,7 +212,7 @@
 }
 
 .explanation-section h4 {
-  color: #667eea;
+  color: #0077b6;
   margin-bottom: 10px;
   font-size: 1.1rem;
 }
