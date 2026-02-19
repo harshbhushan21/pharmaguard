@@ -16,7 +16,8 @@ from .schemas import (
     ClinicalRecommendation,
     LLMExplanation,
     QualityMetrics,
-    Phenotype
+    Phenotype,
+    DrugAnalysisResult,
 )
 from .vcf_parser import parse_vcf_file
 from .phenotype import determine_phenotype, get_primary_gene_for_drug
@@ -94,8 +95,10 @@ async def analyze_pharmacogenomics(
             )
         
         # Parse drugs
-        drug_list = [d.strip().upper() for d in drugs.split(',')]
-        
+        drug_list = [d.strip().upper() for d in drugs.split(',') if d.strip()]
+        if not drug_list:
+            raise HTTPException(status_code=400, detail="At least one drug must be provided")
+
         # Validate drugs
         invalid_drugs = [d for d in drug_list if d not in settings.supported_drugs]
         if invalid_drugs:
@@ -104,12 +107,9 @@ async def analyze_pharmacogenomics(
                 detail=f"Unsupported drugs: {', '.join(invalid_drugs)}. Supported: {', '.join(settings.supported_drugs)}"
             )
         
-        # For now, process first drug (can be extended to handle multiple)
-        drug = drug_list[0]
-        
-        # Parse VCF file
+        # Parse VCF file once (shared across drugs)
         variants, warnings = parse_vcf_file(file_content)
-
+        
         # If no variants were parsed, treat this as an invalid VCF and
         # return a clear client error instead of proceeding with analysis.
         if not variants:
@@ -121,45 +121,62 @@ async def analyze_pharmacogenomics(
                 ),
             )
 
-        # Get primary gene for drug
-        primary_gene = get_primary_gene_for_drug(drug)
-        
-        # Filter variants for primary gene
-        gene_variants = [v for v in variants if v.gene == primary_gene]
-        
-        # Determine phenotype
-        diplotype, phenotype = determine_phenotype(primary_gene, gene_variants)
-        
-        # Assess drug risk
-        risk_assessment, clinical_recommendation = assess_drug_risk(drug, phenotype, primary_gene)
-        
-        # Generate LLM explanation
-        llm_explanation = generate_explanation(
-            drug=drug,
-            gene=primary_gene,
-            phenotype=phenotype,
-            diplotype=diplotype,
-            variants=gene_variants,
-            risk_label=risk_assessment.risk_label.value,
-            clinical_recommendation=clinical_recommendation.action
-        )
-        
-        # Create pharmacogenomic profile
-        profile = PharmacogenomicProfile(
-            primary_gene=primary_gene,
-            diplotype=diplotype,
-            phenotype=phenotype,
-            detected_variants=gene_variants
-        )
-        
-        # Quality metrics
-        quality_metrics = QualityMetrics(
-            vcf_parsing_success=len(warnings) == 0,
-            variant_count=len(variants),
-            target_gene_variants=len(gene_variants),
-            missing_annotations=[],
-            parsing_warnings=warnings,
-        )
+        # Build per-drug results
+        per_drug_results = []
+        for drug in drug_list:
+            primary_gene = get_primary_gene_for_drug(drug)
+
+            # Filter variants for primary gene
+            gene_variants = [v for v in variants if v.gene == primary_gene]
+
+            # Determine phenotype
+            diplotype, phenotype = determine_phenotype(primary_gene, gene_variants)
+
+            # Assess drug risk
+            risk_assessment, clinical_recommendation = assess_drug_risk(drug, phenotype, primary_gene)
+
+            # Generate LLM explanation
+            llm_explanation = generate_explanation(
+                drug=drug,
+                gene=primary_gene,
+                phenotype=phenotype,
+                diplotype=diplotype,
+                variants=gene_variants,
+                risk_label=risk_assessment.risk_label.value,
+                clinical_recommendation=clinical_recommendation.action,
+            )
+
+            # Create pharmacogenomic profile
+            profile = PharmacogenomicProfile(
+                primary_gene=primary_gene,
+                diplotype=diplotype,
+                phenotype=phenotype,
+                detected_variants=gene_variants,
+            )
+
+            # Quality metrics (per drug)
+            quality_metrics = QualityMetrics(
+                vcf_parsing_success=len(warnings) == 0,
+                variant_count=len(variants),
+                target_gene_variants=len(gene_variants),
+                missing_annotations=[],
+                parsing_warnings=warnings,
+            )
+
+            per_drug_results.append(
+                DrugAnalysisResult(
+                    drug=drug,
+                    risk_assessment=RiskAssessment(**risk_assessment.model_dump()),
+                    pharmacogenomic_profile=PharmacogenomicProfile(**profile.model_dump()),
+                    clinical_recommendation=ClinicalRecommendation(**clinical_recommendation.model_dump()),
+                    llm_generated_explanation=LLMExplanation(**llm_explanation.model_dump()),
+                    quality_metrics=QualityMetrics(**quality_metrics.model_dump()),
+                )
+            )
+
+        # Use the first drug's result for backward-compatible top-level fields
+        primary_result = per_drug_results[0]
+        primary_drug = primary_result.drug
         
         # Generate patient ID if not provided
         if not patient_id:
@@ -168,13 +185,14 @@ async def analyze_pharmacogenomics(
         # Create response
         response = AnalysisResponse(
             patient_id=patient_id,
-            drug=drug,
+            drug=primary_drug,
             timestamp=datetime.now().isoformat(),
-            risk_assessment=risk_assessment,
-            pharmacogenomic_profile=profile,
-            clinical_recommendation=clinical_recommendation,
-            llm_generated_explanation=llm_explanation,
-            quality_metrics=quality_metrics
+            risk_assessment=primary_result.risk_assessment,
+            pharmacogenomic_profile=primary_result.pharmacogenomic_profile,
+            clinical_recommendation=primary_result.clinical_recommendation,
+            llm_generated_explanation=primary_result.llm_generated_explanation,
+            quality_metrics=primary_result.quality_metrics,
+            all_drugs_results=per_drug_results if len(per_drug_results) > 1 else None,
         )
         
         return response
