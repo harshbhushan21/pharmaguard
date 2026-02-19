@@ -87,6 +87,15 @@ class QualityMetrics(BaseModel):
     parsing_warnings: List[str] = Field(default_factory=list, description="Parsing warnings")
 
 
+class DrugAnalysisResult(BaseModel):
+    """Per-drug analysis result when multiple drugs are requested."""
+    drug: str = Field(..., description="Drug name")
+    risk_assessment: RiskAssessment = Field(..., description="Risk assessment for this drug")
+    pharmacogenomic_profile: PharmacogenomicProfile = Field(..., description="Pharmacogenomic profile for this drug")
+    clinical_recommendation: ClinicalRecommendation = Field(..., description="Clinical recommendation for this drug")
+    llm_generated_explanation: LLMExplanation = Field(..., description="LLM-generated explanation for this drug")
+    quality_metrics: QualityMetrics = Field(..., description="Quality metrics for this drug")
+
 class AnalysisRequest(BaseModel):
     """Analysis request model."""
     drugs: str = Field(..., description="Comma-separated drug names")
@@ -103,3 +112,7 @@ class AnalysisResponse(BaseModel):
     clinical_recommendation: ClinicalRecommendation = Field(..., description="Clinical recommendation")
     llm_generated_explanation: LLMExplanation = Field(..., description="LLM-generated explanation")
     quality_metrics: QualityMetrics = Field(..., description="Quality metrics")
+    all_drugs_results: Optional[List[DrugAnalysisResult]] = Field(
+        None,
+        description="Per-drug results when multiple drugs are requested (first drug is also reflected in top-level fields)",
+    )

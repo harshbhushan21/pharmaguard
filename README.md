@@ -4,24 +4,23 @@
 
 PharmaGuard is a web application that analyzes patient genetic data (VCF files) and drug names to predict personalized pharmacogenomic risks and provide clinically actionable recommendations with LLM-generated explanations.
 
-## 🚀 Live Demo
 
-- **Live Application**: [Deployment URL - To be added]
+## Live Demo
+
+- **Live Application**: [https://pharmaguard-two.vercel.app/]
 - **LinkedIn Video**: [Video Link - To be added]
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Usage](#usage)
-- [API Documentation](#api-documentation)
 - [Deployment](#deployment)
-- [Testing](#testing)
 - [Team](#team)
 
-## ✨ Features
+## Features
 
 - **VCF File Parsing**: Parses authentic VCF files (Variant Call Format v4.2) to extract pharmacogenomic variants
 - **Variant Detection**: Identifies variants across 6 critical genes:
@@ -41,7 +40,7 @@ PharmaGuard is a web application that analyzes patient genetic data (VCF files) 
 - **AI Explanations**: Generates detailed clinical explanations using LLM with variant citations and biological mechanisms
 - **Modern UI**: Clean, responsive web interface with drag-and-drop file upload
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────┐
@@ -74,7 +73,7 @@ PharmaGuard is a web application that analyzes patient genetic data (VCF files) 
 7. Results are returned as structured JSON
 8. Frontend displays results with color-coded risk levels
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **FastAPI** - Modern Python web framework
@@ -90,11 +89,10 @@ PharmaGuard is a web application that analyzes patient genetic data (VCF files) 
 - **React Dropzone** - File upload component
 
 ### Deployment
-- **Docker** - Containerization
-- **Vercel/Netlify** - Frontend hosting
-- **Render/Railway** - Backend hosting
+- **Vercel** - Frontend hosting
+- **Render** - Backend hosting
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -107,7 +105,7 @@ PharmaGuard is a web application that analyzes patient genetic data (VCF files) 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd pharmaguard-1
+cd pharmaguard
 ```
 
 2. Navigate to backend directory:
@@ -172,22 +170,8 @@ npm run dev
 
 Frontend will be available at `http://localhost:3000`
 
-### Docker Setup
 
-1. Create `.env` file in root directory with OpenAI API key:
-```
-OPENAI_API_KEY=your_api_key_here
-```
-
-2. Build and run with Docker Compose:
-```bash
-docker-compose up --build
-```
-
-Backend: `http://localhost:8000`
-Frontend: `http://localhost:3000`
-
-## 🎯 Usage
+## Usage
 
 ### Web Interface
 
@@ -219,7 +203,7 @@ Sample VCF files are available in the `sample_data/` directory:
 - `patient_001.vcf` - Sample patient with multiple variants
 - `patient_002.vcf` - Sample patient with normal metabolizer variants
 
-## 📡 API Documentation
+## API Documentation
 
 ### Endpoints
 
@@ -299,13 +283,7 @@ Main analysis endpoint.
 }
 ```
 
-### API Documentation (Swagger)
-
-Interactive API documentation is available at:
-- `http://localhost:8000/docs` (Swagger UI)
-- `http://localhost:8000/redoc` (ReDoc)
-
-## 🚢 Deployment
+## Deployment
 
 ### Backend Deployment (Render)
 
@@ -327,33 +305,8 @@ Interactive API documentation is available at:
    - `VITE_API_URL` (your backend URL)
 5. Deploy
 
-### Frontend Deployment (Netlify)
 
-1. Install Netlify CLI: `npm i -g netlify-cli`
-2. Navigate to frontend directory: `cd frontend`
-3. Run: `netlify deploy --prod`
-4. Configure environment variables in Netlify dashboard
-5. Update `netlify.toml` with your backend URL
-
-## 🧪 Testing
-
-Run backend tests:
-```bash
-cd backend
-pytest tests/
-```
-
-Run specific test file:
-```bash
-pytest tests/test_vcf_parser.py
-```
-
-Run with coverage:
-```bash
-pytest tests/ --cov=app --cov-report=html
-```
-
-## 📝 Project Structure
+## Project Structure
 
 ```
 pharmaguard-1/
@@ -401,24 +354,13 @@ pharmaguard-1/
 └── README.md
 ```
 
-## 👥 Team
+## Team
 
-- [Team Member Names - To be added]
+- Natasha Agarwal
+- Disha Kurkuri
+- Disha R Rao
+- Harsh Bhushan
 
-## 📄 License
 
-[License information - To be added]
-
-## 🙏 Acknowledgments
-
-- CPIC (Clinical Pharmacogenetics Implementation Consortium) for guidelines
-- dbSNP for variant annotations
-- OpenAI for LLM capabilities
-
-## 📧 Contact
-
-[Contact information - To be added]
-
----
 
 **Note**: This application is for educational and research purposes. Clinical decisions should always be made in consultation with qualified healthcare professionals.

@@ -9,6 +9,22 @@ const ResultsDisplay = ({ results, onReset }) => {
     metrics: false,
   })
 
+  // Support multiple drugs: normalize to a per-drug results array
+  const perDrugResults = results.all_drugs_results && results.all_drugs_results.length > 0
+    ? results.all_drugs_results
+    : [{
+        drug: results.drug,
+        risk_assessment: results.risk_assessment,
+        pharmacogenomic_profile: results.pharmacogenomic_profile,
+        clinical_recommendation: results.clinical_recommendation,
+        llm_generated_explanation: results.llm_generated_explanation,
+        quality_metrics: results.quality_metrics,
+      }]
+
+  const [selectedDrugIndex, setSelectedDrugIndex] = useState(0)
+
+  const activeResult = perDrugResults[selectedDrugIndex] || perDrugResults[0]
+
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -65,9 +81,23 @@ const ResultsDisplay = ({ results, onReset }) => {
 
   return (
     <div className="results-display">
-      <div className="results-header">
-        <h2>Analysis Results</h2>
-        <div className="results-actions">
+        <div className="results-header">
+          <h2>Analysis Results</h2>
+          {perDrugResults.length > 1 && (
+            <div className="drug-selector">
+              {perDrugResults.map((drugResult, idx) => (
+                <button
+                  key={drugResult.drug}
+                  type="button"
+                  className={`drug-selector-button ${idx === selectedDrugIndex ? 'active' : ''}`}
+                  onClick={() => setSelectedDrugIndex(idx)}
+                >
+                  {drugResult.drug}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="results-actions">
           <button onClick={downloadJSON} className="action-button">
             Download JSON
           </button>
@@ -84,37 +114,37 @@ const ResultsDisplay = ({ results, onReset }) => {
         {/* Patient Info */}
         <div className="result-card">
           <h3>Patient Information</h3>
-          <div className="info-grid">
-            <div>
-              <span className="label">Patient ID:</span>
-              <span className="value">{results.patient_id}</span>
+            <div className="info-grid">
+              <div>
+                <span className="label">Patient ID:</span>
+                <span className="value">{results.patient_id}</span>
+              </div>
+              <div>
+                <span className="label">Drug:</span>
+                <span className="value">{activeResult.drug}</span>
+              </div>
+              <div>
+                <span className="label">Timestamp:</span>
+                <span className="value">{new Date(results.timestamp).toLocaleString()}</span>
+              </div>
             </div>
-            <div>
-              <span className="label">Drug:</span>
-              <span className="value">{results.drug}</span>
-            </div>
-            <div>
-              <span className="label">Timestamp:</span>
-              <span className="value">{new Date(results.timestamp).toLocaleString()}</span>
-            </div>
-          </div>
         </div>
 
         {/* Risk Assessment */}
         <div className="result-card risk-card">
           <h3>Risk Assessment</h3>
-          <div className="risk-badge" style={{ backgroundColor: getRiskColor(results.risk_assessment.risk_label) }}>
-            {results.risk_assessment.risk_label}
+          <div className="risk-badge" style={{ backgroundColor: getRiskColor(activeResult.risk_assessment.risk_label) }}>
+            {activeResult.risk_assessment.risk_label}
           </div>
           <div className="risk-details">
             <div className="risk-item">
               <span className="label">Confidence Score:</span>
-              <span className="value">{(results.risk_assessment.confidence_score * 100).toFixed(1)}%</span>
+              <span className="value">{(activeResult.risk_assessment.confidence_score * 100).toFixed(1)}%</span>
             </div>
             <div className="risk-item">
               <span className="label">Severity:</span>
-              <span className="value severity-badge" style={{ backgroundColor: getSeverityColor(results.risk_assessment.severity) }}>
-                {results.risk_assessment.severity.toUpperCase()}
+              <span className="value severity-badge" style={{ backgroundColor: getSeverityColor(activeResult.risk_assessment.severity) }}>
+                {activeResult.risk_assessment.severity.toUpperCase()}
               </span>
             </div>
           </div>
@@ -131,22 +161,22 @@ const ResultsDisplay = ({ results, onReset }) => {
               <div className="info-grid">
                 <div>
                   <span className="label">Primary Gene:</span>
-                  <span className="value">{results.pharmacogenomic_profile.primary_gene}</span>
+                  <span className="value">{activeResult.pharmacogenomic_profile.primary_gene}</span>
                 </div>
                 <div>
                   <span className="label">Diplotype:</span>
-                  <span className="value">{results.pharmacogenomic_profile.diplotype}</span>
+                  <span className="value">{activeResult.pharmacogenomic_profile.diplotype}</span>
                 </div>
                 <div>
                   <span className="label">Phenotype:</span>
-                  <span className="value">{results.pharmacogenomic_profile.phenotype}</span>
+                  <span className="value">{activeResult.pharmacogenomic_profile.phenotype}</span>
                 </div>
               </div>
-              {results.pharmacogenomic_profile.detected_variants.length > 0 && (
+              {activeResult.pharmacogenomic_profile.detected_variants.length > 0 && (
                 <div className="variants-list">
                   <h4>Detected Variants:</h4>
                   <ul>
-                    {results.pharmacogenomic_profile.detected_variants.map((variant, idx) => (
+                    {activeResult.pharmacogenomic_profile.detected_variants.map((variant, idx) => (
                       <li key={idx}>
                         <strong>{variant.rsid}</strong> - {variant.gene}
                         {variant.star_allele && ` (${variant.star_allele})`}
@@ -167,29 +197,29 @@ const ResultsDisplay = ({ results, onReset }) => {
           </div>
           {expandedSections.recommendation && (
             <div className="card-content">
-              <p className="recommendation-action">{results.clinical_recommendation.action}</p>
-              {results.clinical_recommendation.dosage_adjustment && (
+              <p className="recommendation-action">{activeResult.clinical_recommendation.action}</p>
+              {activeResult.clinical_recommendation.dosage_adjustment && (
                 <div className="recommendation-item">
                   <strong>Dosage Adjustment:</strong>
-                  <p>{results.clinical_recommendation.dosage_adjustment}</p>
+                  <p>{activeResult.clinical_recommendation.dosage_adjustment}</p>
                 </div>
               )}
-              {results.clinical_recommendation.monitoring && (
+              {activeResult.clinical_recommendation.monitoring && (
                 <div className="recommendation-item">
                   <strong>Monitoring:</strong>
-                  <p>{results.clinical_recommendation.monitoring}</p>
+                  <p>{activeResult.clinical_recommendation.monitoring}</p>
                 </div>
               )}
-              {results.clinical_recommendation.alternative_drugs && (
+              {activeResult.clinical_recommendation.alternative_drugs && (
                 <div className="recommendation-item">
                   <strong>Alternative Drugs:</strong>
-                  <p>{results.clinical_recommendation.alternative_drugs.join(', ')}</p>
+                  <p>{activeResult.clinical_recommendation.alternative_drugs.join(', ')}</p>
                 </div>
               )}
-              {results.clinical_recommendation.cpic_guideline && (
+              {activeResult.clinical_recommendation.cpic_guideline && (
                 <div className="recommendation-item">
                   <strong>CPIC Guideline:</strong>
-                  <p>{results.clinical_recommendation.cpic_guideline}</p>
+                  <p>{activeResult.clinical_recommendation.cpic_guideline}</p>
                 </div>
               )}
             </div>
@@ -206,17 +236,17 @@ const ResultsDisplay = ({ results, onReset }) => {
             <div className="card-content">
               <div className="explanation-section">
                 <h4>Summary</h4>
-                <p>{results.llm_generated_explanation.summary}</p>
+                <p>{activeResult.llm_generated_explanation.summary}</p>
               </div>
               <div className="explanation-section">
                 <h4>Biological Mechanism</h4>
-                <p>{results.llm_generated_explanation.mechanism}</p>
+                <p>{activeResult.llm_generated_explanation.mechanism}</p>
               </div>
-              {results.llm_generated_explanation.variant_citations.length > 0 && (
+              {activeResult.llm_generated_explanation.variant_citations.length > 0 && (
                 <div className="explanation-section">
                   <h4>Cited Variants</h4>
                   <ul>
-                    {results.llm_generated_explanation.variant_citations.map((rsid, idx) => (
+                    {activeResult.llm_generated_explanation.variant_citations.map((rsid, idx) => (
                       <li key={idx}>{rsid}</li>
                     ))}
                   </ul>
@@ -224,7 +254,7 @@ const ResultsDisplay = ({ results, onReset }) => {
               )}
               <div className="explanation-section">
                 <h4>Clinical Significance</h4>
-                <p>{results.llm_generated_explanation.clinical_significance}</p>
+                <p>{activeResult.llm_generated_explanation.clinical_significance}</p>
               </div>
             </div>
           )}
@@ -241,24 +271,24 @@ const ResultsDisplay = ({ results, onReset }) => {
               <div className="info-grid">
                 <div>
                   <span className="label">VCF Parsing:</span>
-                  <span className={`value ${results.quality_metrics.vcf_parsing_success ? 'success' : 'error'}`}>
-                    {results.quality_metrics.vcf_parsing_success ? 'Success' : 'Failed'}
+                  <span className={`value ${activeResult.quality_metrics.vcf_parsing_success ? 'success' : 'error'}`}>
+                    {activeResult.quality_metrics.vcf_parsing_success ? 'Success' : 'Failed'}
                   </span>
                 </div>
                 <div>
                   <span className="label">Total Variants:</span>
-                  <span className="value">{results.quality_metrics.variant_count}</span>
+                  <span className="value">{activeResult.quality_metrics.variant_count}</span>
                 </div>
                 <div>
                   <span className="label">Target Gene Variants:</span>
-                  <span className="value">{results.quality_metrics.target_gene_variants}</span>
+                  <span className="value">{activeResult.quality_metrics.target_gene_variants}</span>
                 </div>
               </div>
-              {results.quality_metrics.parsing_warnings.length > 0 && (
+              {activeResult.quality_metrics.parsing_warnings.length > 0 && (
                 <div className="warnings-list">
                   <h4>Warnings:</h4>
                   <ul>
-                    {results.quality_metrics.parsing_warnings.map((warning, idx) => (
+                    {activeResult.quality_metrics.parsing_warnings.map((warning, idx) => (
                       <li key={idx}>{warning}</li>
                     ))}
                   </ul>
