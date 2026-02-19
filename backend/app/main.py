@@ -109,7 +109,18 @@ async def analyze_pharmacogenomics(
         
         # Parse VCF file
         variants, warnings = parse_vcf_file(file_content)
-        
+
+        # If no variants were parsed, treat this as an invalid VCF and
+        # return a clear client error instead of proceeding with analysis.
+        if not variants:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "No pharmacogenomic variants could be parsed from the VCF file. "
+                    "Please ensure the file is a valid VCF with the required annotations."
+                ),
+            )
+
         # Get primary gene for drug
         primary_gene = get_primary_gene_for_drug(drug)
         
@@ -143,11 +154,11 @@ async def analyze_pharmacogenomics(
         
         # Quality metrics
         quality_metrics = QualityMetrics(
-            vcf_parsing_success=True,
+            vcf_parsing_success=len(warnings) == 0,
             variant_count=len(variants),
             target_gene_variants=len(gene_variants),
             missing_annotations=[],
-            parsing_warnings=warnings
+            parsing_warnings=warnings,
         )
         
         # Generate patient ID if not provided
