@@ -1,0 +1,26 @@
+.error-display {
+  display: flex;
+  gap: 15px;
+  padding: 15px 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  margin-top: 20px;
+  color: #991b1b;
+}
+
+.error-icon {
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+.error-content h3 {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.error-content p {
+  margin: 0;
+  font-size: 0.95rem;
+}
